@@ -6,7 +6,7 @@ import {
 import { ICONS, DEFAULT_AVATARS } from "./icons.js";
 import { initAuthScreen } from "./auth.js";
 import { initSlicesTab } from "./slices.js";
-import { initChatsTab } from "./chats.js";
+import { initChatsTab, closeChatWindow } from "./chats.js";
 import { initProfileTab, renderProfile } from "./profile.js";
 import { initSettingsTab, applyThemeFromUser } from "./settings.js";
 import { toast } from "./utils.js";
@@ -113,7 +113,7 @@ export function goToProfile(uid) {
 }
 
 function switchTab(tab) {
-  document.getElementById("chat-window").classList.remove("active");
+  closeChatWindow();
   document.getElementById("comments-view").classList.remove("active");
   document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
   document.querySelectorAll(".side-tab").forEach((b) => b.classList.remove("active"));

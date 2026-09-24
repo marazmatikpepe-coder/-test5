@@ -18,6 +18,11 @@ let msgUnsub = null;
 let lastMsgAuthor = null;
 const watchedStatuses = new Set();
 
+export function closeChatWindow() {
+  document.getElementById("chat-window").classList.remove("active");
+  if (msgUnsub) { msgUnsub(); msgUnsub = null; }
+}
+
 export function initChatsTab() {
   document.getElementById("btn-new-chat").onclick = openNewChatModal;
   loadChatList();
@@ -310,7 +315,7 @@ function renderChatWindowShell() {
       <button class="round-btn" id="cw-video-circle"><img class="icon" src="${ICONS.videoCircle}" /></button>
       <button class="send-btn" id="cw-send"><img class="icon icon--noinvert" style="width:18px;height:18px;filter:invert(1);" id="cw-send-icon" src="${ICONS.mic}" /></button>
     </div>`;
-  document.getElementById("cw-back").onclick = () => { document.getElementById("chat-window").classList.remove("active"); };
+  document.getElementById("cw-back").onclick = () => closeChatWindow();
   document.getElementById("cw-info").onclick = () => {
     if (meta.type === "direct" && meta.otherUid) {
       document.getElementById("chat-window").classList.remove("active");
@@ -499,7 +504,8 @@ function applyChatWallpaper() {
 
 function loadMessages(chatId) {
   lastMsgAuthor = null;
-  onValue(ref(db, `messages/${chatId}`), (snap) => {
+  if (msgUnsub) { msgUnsub(); msgUnsub = null; }
+  msgUnsub = onValue(ref(db, `messages/${chatId}`), (snap) => {
     const msgs = [];
     snap.forEach((m) => msgs.push({ id: m.key, ...m.val() }));
     msgs.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));

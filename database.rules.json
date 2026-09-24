@@ -1,0 +1,79 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $uid",
+        "followers": {
+          "$followerId": { ".write": "auth != null && auth.uid === $followerId" }
+        },
+        "followersCount": { ".write": "auth != null" },
+        "postsCount": { ".write": "auth != null" }
+      }
+    },
+    "usernames": {
+      ".read": true,
+      "$username": {
+        ".write": "auth != null && (!data.exists() || data.val() === auth.uid)"
+      }
+    },
+    "posts": {
+      ".read": "auth != null",
+      ".indexOn": ["createdAt", "authorId"],
+      "$postId": {
+        ".write": "auth != null && (!data.exists() || data.child('authorId').val() === auth.uid || newData.child('authorId').val() === auth.uid)",
+        "likes": {
+          "$uid": { ".write": "auth != null && auth.uid === $uid" }
+        },
+        "likesCount": { ".write": "auth != null" },
+        "views": {
+          "$uid": { ".write": "auth != null && auth.uid === $uid" }
+        },
+        "viewsCount": { ".write": "auth != null" },
+        "commentsCount": { ".write": "auth != null" },
+        "repostsCount": { ".write": "auth != null" }
+      }
+    },
+    "comments": {
+      ".read": "auth != null",
+      "$postId": {
+        ".indexOn": "createdAt",
+        "$commentId": { ".write": "auth != null" }
+      }
+    },
+    "replies": {
+      ".read": "auth != null",
+      "$postId": { "$commentId": { "$replyId": { ".write": "auth != null" } } }
+    },
+    "channels": {
+      ".read": "auth != null",
+      ".indexOn": "ownerId",
+      "$channelId": {
+        ".write": "auth != null && (!data.exists() || data.child('ownerId').val() === auth.uid || data.child('admins').child(auth.uid).exists())"
+      }
+    },
+    "chats": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "userChats": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$chatId": {
+          ".read": "auth != null && (auth.uid === $uid || root.child('chats').child($chatId).child('members').child(auth.uid).exists())",
+          ".write": "auth != null && (auth.uid === $uid || root.child('chats').child($chatId).child('members').child(auth.uid).exists())"
+        }
+      }
+    },
+    "messages": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "status": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    }
+  }
+}
