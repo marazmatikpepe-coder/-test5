@@ -520,65 +520,76 @@ function renderMessages(msgs) {
   let html = "";
   let prevDate = null;
   msgs.forEach((m) => {
-    const dayLabel = dateSepLabel(m.createdAt || Date.now());
-    if (dayLabel !== prevDate) { html += `<div class="date-sep"><span>${dayLabel}</span></div>`; prevDate = dayLabel; }
-    const out = m.senderId === me.uid;
-    const showAvatar = currentChatMeta.type === "group" && !out;
-    const read = m.readBy && Object.keys(m.readBy).some((u) => u !== m.senderId);
-
-    if (m.sticker) {
-      html += `<div class="msg-row ${out ? "out" : "in"}" data-msg-id="${m.id}">
-        ${showAvatar ? `<img class="msg-group-avatar" src="${m.senderAvatar || ""}" />` : ""}
-        <div data-msg="${m.id}" style="font-size:64px;line-height:1;padding:4px;">${m.sticker}</div>
-      </div>`;
-      return;
+    try {
+      const dayLabel = dateSepLabel(m.createdAt || Date.now());
+      if (dayLabel !== prevDate) { html += `<div class="date-sep"><span>${dayLabel}</span></div>`; prevDate = dayLabel; }
+      html += renderOneMessage(m, me);
+    } catch (err) {
+      console.error("Не удалось отрисовать сообщение", m.id, m, err);
+      html += `<div class="date-sep"><span style="color:var(--danger);">⚠ ошибка показа сообщения (см. консоль)</span></div>`;
     }
-
-    let mediaHtml = "";
-    if (m.imageURL) mediaHtml = `<img class="msg-img" src="${m.imageURL}" />`;
-    else if (m.audioURL) mediaHtml = `<audio controls src="${m.audioURL}" style="max-width:220px;"></audio>`;
-    else if (m.videoNoteURL) mediaHtml = `<video src="${m.videoNoteURL}" controls style="width:200px;height:200px;border-radius:50%;object-fit:cover;"></video>`;
-    else if (m.fileURL) mediaHtml = `<a href="${m.fileURL}" download="${escapeHtml(m.fileName || "file")}" style="display:flex;gap:8px;align-items:center;color:inherit;text-decoration:none;"><img class="icon icon--sm" src="${ICONS.file}"/> ${escapeHtml(m.fileName || "Файл")}</a>`;
-
-    let pollHtml = "";
-    if (m.poll) {
-      const totalVotes = m.poll.options.reduce((s, o) => s + Object.keys(o.votes || {}).length, 0);
-      pollHtml = `<div style="min-width:220px;">
-        <div style="font-weight:700;margin-bottom:8px;">📊 ${escapeHtml(m.poll.question)}</div>
-        ${m.poll.options.map((o, i) => {
-          const votes = Object.keys(o.votes || {}).length;
-          const pct = totalVotes ? Math.round((votes / totalVotes) * 100) : 0;
-          const meVoted = me && o.votes && o.votes[me.uid];
-          return `<div data-vote="${i}" data-msg-id="${m.id}" style="cursor:pointer;background:var(--surface);border-radius:8px;padding:6px 10px;margin-bottom:6px;position:relative;overflow:hidden;">
-            <div style="position:absolute;inset:0;width:${pct}%;background:var(--accent-dim);z-index:0;"></div>
-            <div style="position:relative;z-index:1;display:flex;justify-content:space-between;font-size:13px;">
-              <span>${meVoted ? "✓ " : ""}${escapeHtml(o.text)}</span><span>${pct}%</span>
-            </div>
-          </div>`;
-        }).join("")}
-        <div style="font-size:11px;color:var(--text-dim);">${totalVotes} голосов</div>
-      </div>`;
-    }
-
-    html += `
-      <div class="msg-row ${out ? "out" : "in"}" data-msg-id="${m.id}">
-        ${showAvatar ? `<img class="msg-group-avatar" src="${m.senderAvatar || ""}" />` : ""}
-        <div class="bubble" data-msg="${m.id}">
-          ${currentChatMeta.type === "group" && !out ? `<div class="sender-name">${escapeHtml(m.senderName || "")}</div>` : ""}
-          ${m.text ? `<div>${richText(m.text)}</div>` : ""}
-          ${mediaHtml}
-          ${pollHtml}
-          <div class="bubble-meta">
-            ${m.editedAt ? "ред. " : ""}${timeShort(m.createdAt || Date.now())}
-            ${out ? `<span class="ticks ${read ? "read" : ""}">${read ? "✓✓" : "✓"}</span>` : ""}
-          </div>
-          ${renderReactions(m)}
-        </div>
-      </div>`;
   });
   el.innerHTML = html || `<div class="empty-state">Сообщений пока нет — напиши первым!</div>`;
   el.scrollTop = el.scrollHeight;
+  attachMessageHandlers(el, msgs, me);
+}
 
+function renderOneMessage(m, me) {
+  const out = m.senderId === me.uid;
+  const showAvatar = currentChatMeta.type === "group" && !out;
+  const read = m.readBy && Object.keys(m.readBy).some((u) => u !== m.senderId);
+
+  if (m.sticker) {
+    return `<div class="msg-row ${out ? "out" : "in"}" data-msg-id="${m.id}">
+      ${showAvatar ? `<img class="msg-group-avatar" src="${m.senderAvatar || ""}" />` : ""}
+      <div data-msg="${m.id}" style="font-size:64px;line-height:1;padding:4px;">${m.sticker}</div>
+    </div>`;
+  }
+
+  let mediaHtml = "";
+  if (m.imageURL) mediaHtml = `<img class="msg-img" src="${m.imageURL}" />`;
+  else if (m.audioURL) mediaHtml = `<audio controls src="${m.audioURL}" style="max-width:220px;"></audio>`;
+  else if (m.videoNoteURL) mediaHtml = `<video src="${m.videoNoteURL}" controls style="width:200px;height:200px;border-radius:50%;object-fit:cover;"></video>`;
+  else if (m.fileURL) mediaHtml = `<a href="${m.fileURL}" download="${escapeHtml(m.fileName || "file")}" style="display:flex;gap:8px;align-items:center;color:inherit;text-decoration:none;"><img class="icon icon--sm" src="${ICONS.file}"/> ${escapeHtml(m.fileName || "Файл")}</a>`;
+
+  let pollHtml = "";
+  if (m.poll) {
+    const totalVotes = m.poll.options.reduce((s, o) => s + Object.keys(o.votes || {}).length, 0);
+    pollHtml = `<div style="min-width:220px;">
+      <div style="font-weight:700;margin-bottom:8px;">📊 ${escapeHtml(m.poll.question)}</div>
+      ${m.poll.options.map((o, i) => {
+        const votes = Object.keys(o.votes || {}).length;
+        const pct = totalVotes ? Math.round((votes / totalVotes) * 100) : 0;
+        const meVoted = me && o.votes && o.votes[me.uid];
+        return `<div data-vote="${i}" data-msg-id="${m.id}" style="cursor:pointer;background:var(--surface);border-radius:8px;padding:6px 10px;margin-bottom:6px;position:relative;overflow:hidden;">
+          <div style="position:absolute;inset:0;width:${pct}%;background:var(--accent-dim);z-index:0;"></div>
+          <div style="position:relative;z-index:1;display:flex;justify-content:space-between;font-size:13px;">
+            <span>${meVoted ? "✓ " : ""}${escapeHtml(o.text)}</span><span>${pct}%</span>
+          </div>
+        </div>`;
+      }).join("")}
+      <div style="font-size:11px;color:var(--text-dim);">${totalVotes} голосов</div>
+    </div>`;
+  }
+
+  return `
+    <div class="msg-row ${out ? "out" : "in"}" data-msg-id="${m.id}">
+      ${showAvatar ? `<img class="msg-group-avatar" src="${m.senderAvatar || ""}" />` : ""}
+      <div class="bubble" data-msg="${m.id}">
+        ${currentChatMeta.type === "group" && !out ? `<div class="sender-name">${escapeHtml(m.senderName || "")}</div>` : ""}
+        ${m.text ? `<div>${richText(m.text)}</div>` : ""}
+        ${mediaHtml}
+        ${pollHtml}
+        <div class="bubble-meta">
+          ${m.editedAt ? "ред. " : ""}${timeShort(m.createdAt || Date.now())}
+          ${out ? `<span class="ticks ${read ? "read" : ""}">${read ? "✓✓" : "✓"}</span>` : ""}
+        </div>
+        ${renderReactions(m)}
+      </div>
+    </div>`;
+}
+
+function attachMessageHandlers(el, msgs, me) {
   el.querySelectorAll("[data-vote]").forEach((n) => n.addEventListener("click", (e) => {
     e.stopPropagation();
     voteInPoll(n.dataset.msgId, Number(n.dataset.vote));
