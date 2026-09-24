@@ -1,0 +1,16 @@
+{
+  "name": "K — Kukumber Messenger",
+  "short_name": "K",
+  "description": "Мессенджер K: слайсы, чаты, каналы",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0e1116",
+  "theme_color": "#0e1116",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "https://ltdfoto.ru/images/2026/08/22/image7467a87cb994e0f3.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "https://ltdfoto.ru/images/2026/08/22/image7467a87cb994e0f3.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "https://ltdfoto.ru/images/2026/08/22/image7467a87cb994e0f3.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

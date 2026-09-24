@@ -1,0 +1,65 @@
+/* css/themes.css — цветовые темы K (Kukumber Messenger) */
+
+:root {
+  --radius-s: 10px;
+  --radius-m: 16px;
+  --radius-l: 24px;
+  --radius-pill: 999px;
+  --gap: 12px;
+  --sidebar-w: 84px;
+}
+
+/* ---- accent colors ---- */
+html[data-color="green"]   { --accent: #34c266; --accent-dim: #34c26633; }
+html[data-color="turquoise"] { --accent: #22b8ba; --accent-dim: #22b8ba33; }
+html[data-color="blue"]    { --accent: #3d8bf5; --accent-dim: #3d8bf533; }
+html[data-color="purple"]  { --accent: #8b5cf6; --accent-dim: #8b5cf633; }
+
+/* ---- light theme ---- */
+html[data-theme="light"] {
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --surface-2: #eef0f3;
+  --text: #10141c;
+  --text-dim: #6b7280;
+  --border: #e3e6ea;
+  --bubble-in: #eceef1;
+  --bubble-out: var(--accent);
+  --bubble-out-text: #ffffff;
+  --icon-filter: none;
+  --wallpaper-opacity: .8;
+  --bubble-opacity: 1;
+  --danger: #e5484d;
+  --shadow: 0 6px 24px rgba(20,20,30,.08);
+}
+
+/* ---- dark theme ---- */
+html[data-theme="dark"] {
+  --bg: #0e1116;
+  --surface: #171b22;
+  --surface-2: #1e232c;
+  --text: #eef1f6;
+  --text-dim: #9aa3b2;
+  --border: #262c36;
+  --bubble-in: #232a34;
+  --bubble-out: var(--accent);
+  --bubble-out-text: #ffffff;
+  --icon-filter: invert(1);
+  --wallpaper-opacity: .8;
+  --bubble-opacity: .96;
+  --danger: #ff6367;
+  --shadow: 0 10px 30px rgba(0,0,0,.45);
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+  filter: var(--icon-filter);
+  vertical-align: middle;
+  display: inline-block;
+  object-fit: contain;
+}
+.icon--noinvert { filter: none !important; }
+.icon--sm { width: 16px; height: 16px; }
+.icon--lg { width: 26px; height: 26px; }
+.icon--posts { width: 7px; height: 7px; } /* иконка "посты" мельче остальных в 3 раза */
