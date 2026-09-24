@@ -5,10 +5,16 @@
         ".read": "auth != null",
         ".write": "auth != null && auth.uid === $uid",
         "followers": {
-          "$followerId": { ".write": "auth != null && auth.uid === $followerId" }
+          "$followerId": {
+            ".write": "auth != null && auth.uid === $followerId"
+          }
         },
-        "followersCount": { ".write": "auth != null" },
-        "postsCount": { ".write": "auth != null" }
+        "followersCount": {
+          ".write": "auth != null"
+        },
+        "postsCount": {
+          ".write": "auth != null"
+        }
       }
     },
     "usernames": {
@@ -19,31 +25,54 @@
     },
     "posts": {
       ".read": "auth != null",
-      ".indexOn": ["createdAt", "authorId"],
+      ".indexOn": [
+        "createdAt",
+        "authorId"
+      ],
       "$postId": {
         ".write": "auth != null && (!data.exists() || data.child('authorId').val() === auth.uid || newData.child('authorId').val() === auth.uid)",
         "likes": {
-          "$uid": { ".write": "auth != null && auth.uid === $uid" }
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid"
+          }
         },
-        "likesCount": { ".write": "auth != null" },
+        "likesCount": {
+          ".write": "auth != null"
+        },
         "views": {
-          "$uid": { ".write": "auth != null && auth.uid === $uid" }
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid"
+          }
         },
-        "viewsCount": { ".write": "auth != null" },
-        "commentsCount": { ".write": "auth != null" },
-        "repostsCount": { ".write": "auth != null" }
+        "viewsCount": {
+          ".write": "auth != null"
+        },
+        "commentsCount": {
+          ".write": "auth != null"
+        },
+        "repostsCount": {
+          ".write": "auth != null"
+        }
       }
     },
     "comments": {
       ".read": "auth != null",
       "$postId": {
         ".indexOn": "createdAt",
-        "$commentId": { ".write": "auth != null" }
+        "$commentId": {
+          ".write": "auth != null"
+        }
       }
     },
     "replies": {
       ".read": "auth != null",
-      "$postId": { "$commentId": { "$replyId": { ".write": "auth != null" } } }
+      "$postId": {
+        "$commentId": {
+          "$replyId": {
+            ".write": "auth != null"
+          }
+        }
+      }
     },
     "channels": {
       ".read": "auth != null",
@@ -67,7 +96,10 @@
     },
     "messages": {
       ".read": "auth != null",
-      ".write": "auth != null"
+      ".write": "auth != null",
+      ".indexOn": [
+        "createdAt"
+      ]
     },
     "status": {
       "$uid": {

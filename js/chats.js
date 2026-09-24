@@ -505,11 +505,19 @@ function applyChatWallpaper() {
 function loadMessages(chatId) {
   lastMsgAuthor = null;
   if (msgUnsub) { msgUnsub(); msgUnsub = null; }
-  msgUnsub = onValue(ref(db, `messages/${chatId}`), (snap) => {
+
+  const messagesRef = query(ref(db, `messages/${chatId}`), orderByChild("createdAt"));
+  msgUnsub = onValue(messagesRef, (snap) => {
     const msgs = [];
     snap.forEach((m) => msgs.push({ id: m.key, ...m.val() }));
+    // createdAt can be temporarily absent while a server timestamp resolves.
     msgs.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
     renderMessages(msgs);
+  }, (error) => {
+    console.error("Не удалось загрузить сообщения", chatId, error);
+    const el = document.getElementById("chat-messages");
+    if (el) el.innerHTML = `<div class="empty-state">Не удалось загрузить сообщения.<br><small>${escapeHtml(error?.message || "Ошибка Firebase")}</small></div>`;
+    toast("Не удалось загрузить сообщения: " + (error?.message || error));
   });
 }
 
@@ -693,26 +701,43 @@ async function sendFileMessage(file) {
 
 async function pushMessage(data) {
   const me = getMe();
+  if (!me?.uid || !currentChatId || !currentChatMeta?.members) {
+    toast("Не удалось определить чат для отправки");
+    return;
+  }
+
   try {
     const mRef = push(ref(db, `messages/${currentChatId}`));
-    await set(mRef, {
-      senderId: me.uid, senderName: me.displayName, senderAvatar: me.avatarURL,
-      text: "", imageURL: "", fileURL: "", fileName: "", readBy: { [me.uid]: true },
-      createdAt: serverTimestamp(), ...data,
-    });
-    const preview = data.text || (data.imageURL ? "📷 Фото" : data.fileURL ? "📎 Файл" : data.sticker ? "Стикер" : "Сообщение");
-    const members = currentChatMeta.members || {};
-    for (const uid of Object.keys(members)) {
-      const unreadPatch = {};
+    const message = {
+      senderId: me.uid,
+      senderName: me.displayName || "",
+      senderAvatar: me.avatarURL || "",
+      text: "", imageURL: "", fileURL: "", fileName: "",
+      readBy: { [me.uid]: true },
+      createdAt: serverTimestamp(),
+      ...data,
+    };
+
+    const preview = data.text || (data.imageURL ? "📷 Фото" : data.fileURL ? "📎 Файл" : data.audioURL ? "🎤 Голосовое" : data.videoNoteURL ? "🎥 Видео" : data.sticker ? "Стикер" : data.poll ? "📊 Опрос" : "Сообщение");
+    const updates = {};
+
+    // One multi-location write prevents the message and chat preview from
+    // getting out of sync when several users send messages at once.
+    updates[`messages/${currentChatId}/${mRef.key}`] = message;
+
+    for (const uid of Object.keys(currentChatMeta.members)) {
+      updates[`userChats/${uid}/${currentChatId}/lastMessage`] = preview;
+      updates[`userChats/${uid}/${currentChatId}/lastMessageAt`] = serverTimestamp();
       if (uid !== me.uid) {
-        const curSnap = await get(ref(db, `userChats/${uid}/${currentChatId}/unreadCount`));
-        unreadPatch.unreadCount = (curSnap.val() || 0) + 1;
+        // RTDB increment is atomic, so concurrent messages cannot overwrite
+        // each other's unread counter.
+        updates[`userChats/${uid}/${currentChatId}/unreadCount`] = increment(1);
       }
-      await update(ref(db, `userChats/${uid}/${currentChatId}`), {
-        lastMessage: preview, lastMessageAt: serverTimestamp(), ...unreadPatch,
-      });
     }
+
+    await update(ref(db), updates);
   } catch (e) {
-    toast("Сообщение не отправлено: " + (e.message || e));
+    console.error("Ошибка отправки сообщения", e);
+    toast("Сообщение не отправлено: " + (e?.message || e));
   }
 }

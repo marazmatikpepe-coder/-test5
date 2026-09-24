@@ -18,7 +18,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import {
   getDatabase,
-  ref, set, get, update, remove, push,
+  ref, set, get, update, remove, push, increment,
   onValue, off, query, orderByChild, orderByKey,
   equalTo, limitToLast, serverTimestamp, runTransaction, onDisconnect,
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
@@ -43,7 +43,7 @@ export {
   createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,
   sendPasswordResetEmail, onAuthStateChanged, updateProfile,
   signInWithPopup,
-  ref, set, get, update, remove, push, onValue, off, query,
+  ref, set, get, update, remove, push, increment, onValue, off, query,
   orderByChild, orderByKey, equalTo, limitToLast, serverTimestamp, runTransaction,
   onDisconnect,
 };
